@@ -54,6 +54,7 @@ class Model:
 
     def set_optimizer(self, state=None):
         self.optimizer = sLBFGS(self.variables_to_optimize.values(), **lbfgsConfigDefaults)
+        #self.optimizer = torch.optim.Adam(self.variables_to_optimize.values(), lr=1e-7)
         if state is not None:
             self.optimizer.load_state_dict(state)
 
@@ -78,10 +79,10 @@ class Model:
     def loss(self, **kwargs):
         pass
 
-    def closure(self):
+    def closure(self, backward=True):
         self.optimizer.zero_grad()
-        losses = self.loss(**self.precond(self.variables))
 
+        losses = self.loss(**self.precond(self.variables))
         loss = sum(losses)
         self.log.append([l.detach().cpu() for l in losses])
 
@@ -90,24 +91,32 @@ class Model:
             loss = torch.inf
             for v in self.variables_to_optimize.values():
                 v.grad = torch.full_like(v, float("inf"))
-        else:
+        elif backward:
             loss.backward()
 
         return loss
 
-    def optimize(self, steps=100):
+    def optimize(self, steps=100, wall_time=None):
         self.steps = steps
 
         print("performing optimization...")
         start = time.time()
 
         for i in range(self.current_step, self.current_step + self.steps):
+
+            # ⏱ Check time limit
+            if wall_time is not None and (time.time() - start) >= wall_time:
+                print("Stopping: time limit reached.")
+                break
+
             print("it ", i, ": ", end="")
+
             self.optimizer.step(self.closure)
 
             self.saveState()
 
             if self.stoppingCondition():
+                print("Stopping: stopping condition met.")
                 break
 
             self.current_step += 1

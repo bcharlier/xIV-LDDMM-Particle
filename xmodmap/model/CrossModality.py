@@ -11,6 +11,7 @@ class CrossModality(Model):
     """Loss for cross-modality LDDMM"""
 
     def __init__(self, hamiltonian, shooting, dataLoss, piLoss):
+        super().__init__()
         self.hamiltonian = hamiltonian
         self.shooting = shooting
         self.dataLoss = dataLoss
@@ -34,10 +35,10 @@ class CrossModality(Model):
         pLoss = self.piLoss.weight * self.piLoss(qw1, pi_ST)
 
 
-        print(f"loss: {hLoss.detach().cpu().numpy() + dLoss.detach().cpu().numpy() + pLoss.detach().cpu().numpy()}; "
-              f"H loss: {hLoss.detach().cpu().numpy()}; "
-              f"Var loss: {dLoss.detach().cpu().numpy()}; "
-              f"Pi loss: {pLoss.detach().cpu().numpy()}; "
+        print(f"loss: {hLoss.item() + dLoss.item() + pLoss.item()}; "
+              f"H loss: {hLoss.item()}; "
+              f"Var loss: {dLoss.item()}; "
+              f"Pi loss: {pLoss.item()}; "
               )
 
         return hLoss, dLoss, pLoss

@@ -40,7 +40,9 @@ class Hamiltonian:
         }
         return params_dict
 
-    def GaussKernelHamiltonian(self, sigma, d, uCoeff):
+    @staticmethod
+    def GaussKernelHamiltonian(sigma, d, uCoeff):
+        # TODO: could be place in getU
         qxO = Vi(0, d)
         qyO = Vj(1, d)
         px = Vi(2, d)
@@ -57,6 +59,39 @@ class Hamiltonian:
                     0.5 * (px * py).sum()
                     + wpy * ((qx - qy) * px).sum()
                     - (0.5) * wpx * wpy * (D2 - d)
+            )  # 1/2 factor included here
+            if sInd == 0:
+                retVal = (1.0 / uCoeff[sInd]) * K * h  # normalize by N_sigma/(N sigma**2)
+            else:
+                retVal += (1.0 / uCoeff[sInd]) * K * h
+
+        return retVal.sum_reduction(
+            axis=1
+        )  # (K*h).sum_reduction(axis=1) #,  h2, h3.sum_reduction(axis=1)
+
+    @staticmethod
+    def LaplaceKernelHamiltonian(sigma, d, uCoeff):
+        # TODO: could be place in getU
+
+        qxO = Vi(0, d)
+        qyO = Vj(1, d)
+        px = Vi(2, d)
+        py = Vj(3, d)
+        wpxO = Vi(4, 1)
+        wpyO = Vj(5, 1)
+
+        for sInd in range(len(sigma)):
+            sig = sigma[sInd]
+            qx, qy, wpx, wpy = qxO / sig, qyO / sig, wpxO / sig, wpyO / sig
+            diff = qx - qy
+            R2 = (diff * diff).sum()
+            R = (R2 + 1e-8).sqrt()
+            K = (-R).exp()
+
+            h = (
+                    0.5 * (px * py).sum()
+                    + wpy * ((diff / R) * px).sum()
+                    - 0.5 * wpx * wpy * (1.0 - (d - 1.0) / R)
             )  # 1/2 factor included here
             if sInd == 0:
                 retVal = (1.0 / uCoeff[sInd]) * K * h  # normalize by N_sigma/(N sigma**2)

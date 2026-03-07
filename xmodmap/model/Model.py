@@ -16,6 +16,8 @@ class Model:
     _savedir = None
 
     def __init__(self, *args):
+        self.logs = {"full": [], "steps": []}
+        self.log = self.logs["full"]
         pass
 
     def get_params(self):
@@ -84,7 +86,7 @@ class Model:
 
         losses = self.loss(**self.precond(self.variables))
         loss = sum(losses)
-        self.log.append([l.detach().cpu() for l in losses])
+        self.logs["full"].append([l.detach().cpu() for l in losses])
 
         # Prevent to return a nan when too large values are
         if torch.isnan(loss):
@@ -96,48 +98,51 @@ class Model:
 
         return loss
 
-    def optimize(self, steps=100, wall_time=None):
+    def optimize(self, steps=100, wall_time=None, cb=None):
         self.steps = steps
 
         print("performing optimization...")
-        start = time.time()
+        self.start_optim = time.time()
 
         for i in range(self.current_step, self.current_step + self.steps):
 
-            # ⏱ Check time limit
-            if wall_time is not None and (time.time() - start) >= wall_time:
-                print("Stopping: time limit reached.")
-                break
-
             print("it ", i, ": ", end="")
 
-            self.optimizer.step(self.closure)
+            # Perform a step of optimization, and save the current state
+            loss_step = self.optimizer.step(self.closure)
+            self.logs["steps"].append(loss_step.detach().cpu())
 
             self.saveState()
 
-            if self.stoppingCondition():
-                print("Stopping: stopping condition met.")
+            if cb is not None:
+                cb(self)
+
+            if self.stoppingCondition(wall_time=wall_time):
                 break
 
             self.current_step += 1
 
-        print("Optimization (L-BFGS) time: ", round(time.time() - start, 2), " seconds")
+        print("Optimization time: ", round(time.time() - self.start_optim, 2), " seconds")
 
-    def stoppingCondition(self):
+    def stoppingCondition(self, wall_time=None):
+
         # check for NaN
-        if any(torch.isnan(l) for l in self.log[-1]):
-            print(f"NaN encountered at iteration {self.current_step}.")
+        if torch.isnan(self.logs["steps"][-1]):
+            print(f"Stopping: NaN encountered at iteration {self.current_step}.")
             return 1
 
         # check for convergence
-        if (self.current_step > 0) and torch.allclose(
-            torch.tensor(self.log[-1]), torch.tensor(self.log[-2]), atol=1e-6, rtol=1e-5
-        ):
-            print(f"Local minimum reached at iteration {self.current_step}.")
+        if (self.current_step > 0) and torch.allclose(self.logs["steps"][-1], self.logs["steps"][-2]):
+            print(f"Stopping: Local minimum reached at iteration {self.current_step}.")
             return 1
 
         if self.current_step == self.steps:
-            print(f"Maximum number {self.steps} of iterations reached.")
+            print(f"Stopping: Maximum number {self.steps} of iterations reached.")
+            return 1
+
+        # Check time limit
+        if wall_time is not None and (time.time() - self.start_optim) >= wall_time:
+            print(f"Stopping: time limit {wall_time}s reached.")
             return 1
 
         return 0

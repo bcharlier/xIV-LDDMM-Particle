@@ -3,11 +3,20 @@ from xmodmap.deformation.Hamiltonian import HamiltonianSystem, HamiltonianSystem
 class Abstract_Shooting():
     HS = None
 
-    def __init__(self, nt=10):
+    def __init__(self, sigma, Stilde, cA=1.0, cS=10.0,  cT=1.0, dimEff=3, single=False, nt=10):
         self.nt = nt
         self.integrator = self.ralstonIntegrator
 
-    def ralstonIntegrator(self, ODESystem, x0, nt, deltat=1.0):
+        self.sigma = sigma
+        self.Stilde = Stilde
+        self.cA = cA
+        self.cS = cS
+        self.cT = cT
+        self.dimEff = dimEff
+        self.single = single
+
+    @staticmethod
+    def ralstonIntegrator(ODESystem, x0, nt, deltat=1.0):
         x = tuple(map(lambda x: x.clone(), x0))
         dt = deltat / nt
         l = [x]
@@ -30,16 +39,7 @@ class Abstract_Shooting():
 
 class Shooting(Abstract_Shooting):
     def __init__(self,  sigma, Stilde, cA=1.0, cS=10.0,  cT=1.0, dimEff=3, single=False, nt=10):
-        super().__init__(nt=nt)
-
-        self.sigma = sigma
-        self.Stilde = Stilde
-        self.cA = cA
-        self.cS = cS
-        self.cT = cT
-        self.dimEff = dimEff
-        self.single = single
-
+        super().__init__(sigma, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single, nt=nt)
 
         self.HS = HamiltonianSystem(self.sigma,
                                  self.Stilde,
@@ -59,16 +59,7 @@ class Shooting(Abstract_Shooting):
 
 class ShootingGrid(Abstract_Shooting):
     def __init__(self,  sigma, Stilde, cA=1.0, cS=10.0,  cT=1.0, dimEff=3, single=False, nt=10):
-        super().__init__(nt=nt)
-
-        self.sigma = sigma
-        self.Stilde = Stilde
-        self.cA = cA
-        self.cS = cS
-        self.cT = cT
-        self.dimEff = dimEff
-        self.single = single
-
+        super().__init__(sigma, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single, nt=nt)
 
         self.HS = HamiltonianSystemGrid(self.sigma,
                                  self.Stilde,
@@ -85,20 +76,13 @@ class ShootingGrid(Abstract_Shooting):
             self.nt
         )
 
+
 class ShootingBackwards(Abstract_Shooting):
     """
     Shooting method for the backward (time reversal) Hamiltonian system.
     """
     def __init__(self,  sigma, Stilde, cA=1.0, cS=10.0,  cT=1.0, dimEff=3, single=False, nt=10):
-        super().__init__(nt=nt)
-
-        self.sigma = sigma
-        self.Stilde = Stilde
-        self.cA = cA
-        self.cS = cS
-        self.cT = cT
-        self.dimEff = dimEff
-        self.single = single
+        super().__init__(sigma, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single, nt=nt)
 
         self.HS = HamiltonianSystemBackwards(self.sigma,
                                     self.Stilde,

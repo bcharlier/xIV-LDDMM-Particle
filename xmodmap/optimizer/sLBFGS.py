@@ -81,16 +81,17 @@ def _quadratic_linesearch(obj_func, x, t, d, f, gtd, max_ls=10, increase=1.5, de
         )
         return f_best, g_best, t_best, ls_evals
 
-    # Otherwise (aggressively) backtrack
-    t = min(t1, t_next) * decrease
+    # Otherwise backtrack
+    t = t * decrease
     for _ in range(max_ls - 2):
         if t < min_step:
-            break
+            print("sLBGS: Line search step size below minimum threshold, stopping line search.")
+            return f, g_1, t, ls_evals
         f_new, g_new = obj_func(x, t, d)
         ls_evals += 1
         if f_new < f:
             return f_new, g_new, t, ls_evals
-        t = min(t * decrease, _quadratic_interpolate(0., f, gtd, t, f_new, decrease, increase))
+        t = t * decrease
 
 
 def _cubic_interpolate(x1, f1, g1, x2, f2, g2, bounds=None):

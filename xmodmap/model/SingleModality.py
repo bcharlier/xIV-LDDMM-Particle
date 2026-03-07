@@ -11,6 +11,7 @@ class SingleModality(Model):
     """Loss for single-modality LDDMM"""
 
     def __init__(self, hamiltonian, shooting, dataLoss):
+        super().__init__()
         self.hamiltonian = hamiltonian
         self.shooting = shooting
         self.dataLoss = dataLoss
@@ -29,9 +30,9 @@ class SingleModality(Model):
         dLoss = self.dataLoss.weight * self.dataLoss(qx1, qw1, zeta_S, torch.eye(zeta_S.shape[-1]))
 
 
-        print(f"loss: {hLoss.detach().cpu().numpy() + dLoss.detach().cpu().numpy()}; "
-              f"H loss: {hLoss.detach().cpu().numpy()}; "
-              f"Var loss: {dLoss.detach().cpu().numpy()}; "
+        print(f"loss: {hLoss.item() + dLoss.item()}; "
+              f"H loss: {hLoss.item()}; "
+              f"Var loss: {dLoss.item()}; "
               )
 
         return hLoss, dLoss

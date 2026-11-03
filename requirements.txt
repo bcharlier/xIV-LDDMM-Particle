@@ -3,3 +3,4 @@ pykeops
 numpy
 scipy
 matplotlib
+nibabel

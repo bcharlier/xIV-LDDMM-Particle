@@ -15,27 +15,14 @@ savedir = os.path.join("output", "2D_amygdala")
 
 
 source_file = os.path.join("..", "..", "data", "2D_amygdala","hat_run77_10000points_real.pt")
-S, nu_S = torch.load(source_file)
-
-angle, translation = .6, torch.randn(1, 2, device=S.device, dtype=S.dtype)
-T, nu_T = (
-    S.clone()
-    @ torch.tensor(
-        [[math.cos(angle), -math.sin(angle)], [math.sin(angle), math.cos(angle)]],
-        device=S.device,
-        dtype=S.dtype,
-    ).T
-    + translation,
-    nu_S.clone(),
-)
+S, w_S, zeta_S = torch.load(source_file)
+T, w_T, zeta_T = torch.load(target_file)
 
 d = 2
 dimEff = 2
-labs = nu_T.shape[-1]  # in target
-labS = nu_S.shape[-1]  # template
-sigmaRKHS = [0.2,0.1, 0.05] #[0.2,0.1,0.05] as of 3/16, should be fraction of total domain of S+T #[10.0]
+sigmaRKHS = [0.2,0.1, 0.05]
 sigmaVar = [0.2, 0.1, 0.05, 0.02] #[0.5, 0.2, 0.05, 0.02]  # as of 3/16, should be fraction of total domain of S+T #10.0
-steps = 300
+steps = 30
 beta = None
 res = 1.0
 kScale = torch.tensor(1.)
@@ -48,26 +35,8 @@ Csqlamb = 100.0
 eta0 = torch.tensor(0.2).sqrt()
 lambInit = -1
 single = False
-gamma = 0.1 #0.01 #10.0
+gamma = 0.1
 
-# make them both in z = 0 plane
-if dimEff == 2:
-    S[:,-1] = 0
-    T[:,-1] = 0
-if d == 2:
-    S = S[:,0:2]
-    T = T[:,0:2]
-
-print("S type: ", S.dtype)
-print("nu_S type: ", nu_S.dtype)
-print("T type: ", T.dtype)
-print("nu_T type: ", nu_T.dtype)
-'''
-A = torch.zeros((2,2))
-A[0,1] = 1
-A[1,0] = -1
-S = S @ A
-'''
 
 from xmodmap.preprocess.makePQ_legacy import makePQ
 (
@@ -108,7 +77,7 @@ torch.save(sm,os.path.join(savedir,"sm.pt"))
 
 ## Varifold distance without boundaries
 dataloss = xmodmap.distance.LossVarifoldNorm(sigmaVar, w_T, zeta_T, Ttilde)   # Dream of : (sigmaVar, T, nu_T)
-dataloss.normalize_across_scale(Stilde, w_S, zeta_S, pi_STinit)
+dataloss.normalize_across_scale(Stilde, w_S, zeta_S)
 dataloss.weight = 1.
 
 ## non-rigid and affine deformations

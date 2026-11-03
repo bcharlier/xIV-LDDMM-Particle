@@ -1,0 +1,108 @@
+import time
+import torch
+from matplotlib import pyplot as plt
+import numpy as np
+
+
+from xmodmap2.model.Model import Model
+
+class CrossModalityBoundary(Model):
+    """Boundary loss for cross-modality LDDMM"""
+
+    def __init__(self, deformation, dataLoss, piLoss, lambLoss):
+        super().__init__()
+        self.deformation = deformation
+        self.dataLoss = dataLoss
+        self.piLoss = piLoss
+        self.lambLoss = lambLoss
+        #setattr(self, f"{key}Precond", value)
+
+    def get_params(self):
+        params_dict = {
+            "deformation": self.deformation.get_params(),
+            "dataLoss": self.dataLoss.get_params(),
+            "piLoss": self.piLoss.get_params(),
+            "lambLoss": self.lambLoss.get_params(),
+        }
+        return params_dict
+
+    def loss(self, px=None, pw=None, qx=None, qw=None, pi_ST=None, zeta_S=None, lamb=None):
+        import time
+        start = time.time()
+        hLoss = self.deformation.energy(px, pw, qx, qw)
+        stop = time.time()
+        print("Hamiltonian time: ", (stop-start))
+        
+        start = time.time()
+        _, _, qx1, qw1 = self.deformation(px, pw, qx, qw)
+        stop = time.time()
+        print("Shooting time: ", (stop-start))
+        
+        start = time.time()
+        dLoss = self.dataLoss.weight * self.dataLoss(qx1, qw1, zeta_S, pi_ST, lamb)
+        stop = time.time()
+        print("Dataloss time: ", (stop-start))
+        
+        start = time.time()
+        pLoss = self.piLoss.weight * self.piLoss(qw1, pi_ST)
+        stop = time.time()
+        print("Piloss time: ", (stop-start))
+
+        
+        start = time.time()
+        lLoss = self.lambLoss.weight * self.lambLoss(lamb)
+        stop = time.time()
+        print("Lambloss time: ", (stop-start))
+        
+        print(f"loss: {hLoss.detach().cpu().numpy() + dLoss.detach().cpu().numpy() + pLoss.detach().cpu().numpy() + lLoss.detach().cpu().numpy()}; "
+              f"H loss: {hLoss.detach().cpu().numpy()}; "
+              f"Var loss: {dLoss.detach().cpu().numpy()}; "
+              f"Pi loss: {pLoss.detach().cpu().numpy()}; "
+              f"Lambda loss: {lLoss.detach().cpu().numpy()}")
+        
+
+        return hLoss, dLoss, pLoss, lLoss
+
+
+    def check_resume(self, checkpoint):
+        print(self.dataLoss.get_params())
+        print(self.deformation.get_params())
+        print(self.piLoss.get_params())
+        print(self.lambLoss.get_params())
+              
+        assert self.dataLoss.get_params() == checkpoint["dataLoss"]
+        assert self.deformation.get_params() == checkpoint["deformation"]
+        assert self.piLoss.get_params() == checkpoint["piLoss"]
+        assert self.lambLoss.get_params() == checkpoint["lambLoss"]
+    
+    def print_log(self, logScale=False):
+        # split logs
+        logH = []
+        logD = []
+        logP = []
+        logL = []
+
+        for i in range(0,len(self.log)):
+            logH.append(self.log[i][0].numpy())
+            logD.append(self.log[i][1].numpy())
+            logP.append(self.log[i][2].numpy())
+            logL.append(self.log[i][3].numpy())
+        
+        if not logScale:
+            f,ax = plt.subplots()
+            ax.plot(logH, label=f"Hamiltonian Loss, Final = {logH[-1]}")
+            ax.plot(logD, label=f"Data Loss, Final = {logD[-1]}")
+            ax.plot(logP, label=f"Pi Loss, Final = {logP[-1]}")
+            ax.plot(logL, label=f"Lambda Loss, Final = {logL[-1]}")
+            ax.legend()
+        else:
+            f,ax = plt.subplots()
+            ax.plot(np.log(np.asarray(logH)+1.0), label=f"Hamiltonian Loss, Final = {logH[-1]}")
+            ax.plot(np.log(np.asarray(logD)+1.0), label=f"Data Loss, Final = {logD[-1]}")
+            ax.plot(np.log(np.asarray(logP)+1.0), label=f"Pi Loss, Final = {logP[-1]}")
+            ax.plot(np.log(np.asarray(logL)+1.0), label=f"Lambda Loss, Final = {logL[-1]}")
+            ax.legend()
+            
+        
+        return f
+

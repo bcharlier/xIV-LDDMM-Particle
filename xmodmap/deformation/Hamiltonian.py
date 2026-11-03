@@ -3,42 +3,134 @@ import torch
 from pykeops.torch import Vi, Vj
 
 from xmodmap.deformation.control.nonRigid import getU, getUdiv
-from xmodmap.deformation.control.affine import getATauAlpha
+from xmodmap.deformation.control.affine import getA, getTau, getAlpha, getBarycenter
 import xmodmap.deformation.Ucoeff as uc
+from xmodmap.deformation.transforms import TRANSFORMS
+
+class Control:
+    """One term of the Hamiltonian and its velocity. Subclasses are added together by Hamiltonian."""
+    uses_pw = False  
+
+    def energy(self, px, pw, qx, qw):
+        raise NotImplementedError
+
+    def velocity(self, x, w, px, pw, qx, qw):
+        """Returns the point velocity (M x d) and the weight rate (M x 1)."""
+        raise NotImplementedError
 
 
+class GlobalControl(Control):
+    """Parent of the translation, rotation and scale controls."""
+    def __init__(self, cA, cT, dimEff, single):
+        self.cA, self.cT, self.dimEff, self.single = cA, cT, dimEff, single
+
+
+class TranslationControl(GlobalControl):
+    def energy(self, px, pw, qx, qw):
+        tau = getTau(px, cT=self.cT)
+        return (self.cT / 2) * (tau * tau).sum()
+
+    def velocity(self, x, w, px, pw, qx, qw):
+        return getTau(px, cT=self.cT).expand_as(x), torch.zeros_like(w)
+
+
+class RotationControl(GlobalControl):
+    def energy(self, px, pw, qx, qw):
+        A = getA(px, qx, qw, cA=self.cA)
+        return (self.cA / 2) * (A * A).sum()
+
+    def velocity(self, x, w, px, pw, qx, qw):
+        A = getA(px, qx, qw, cA=self.cA)
+        return (x - getBarycenter(qx, qw)) @ A.T, torch.zeros_like(w)
+
+
+class ScaleControl(GlobalControl):
+    uses_pw = True
+
+    def energy(self, px, pw, qx, qw):
+        Alpha = getAlpha(px, qx, pw, qw, dimEff=self.dimEff, single=self.single)
+        return 0.5 * (Alpha * Alpha).sum()
+
+    def velocity(self, x, w, px, pw, qx, qw):
+        Alpha = getAlpha(px, qx, pw, qw, dimEff=self.dimEff, single=self.single)
+        return (x - getBarycenter(qx, qw)) @ Alpha, Alpha.sum() * w
+
+
+class NonRigidControl(Control):
+    uses_pw = True
+
+    def __init__(self, sigma, Stilde, cS):
+        d = Stilde.shape[1]
+        uCoeff = uc.Ucoeff(sigma, Stilde, cS).uCoeff
+        self.K0 = Hamiltonian.GaussKernelHamiltonian(sigma, d, uCoeff)
+        self.U = getU(sigma, d, uCoeff)
+        self.Udiv = getUdiv(sigma, d, uCoeff)
+
+    def energy(self, px, pw, qx, qw):
+        wpq = pw * qw
+        return self.K0(qx, qx, px, px, wpq, wpq).sum()
+
+    def velocity(self, x, w, px, pw, qx, qw):
+        wpq = pw * qw
+        return self.U(x, qx, px, wpq), self.Udiv(x, qx, px, wpq) * w
+    
 class Hamiltonian:
-    def __init__(self, sigma, Stilde, cA=1.0, cS=10.0,  cT=1.0, dimEff=3, single=False):
-        # TODO: avoid to pack and unpack p and q
+    def __init__(self, sigma, Stilde, cA=1.0, cS=10.0, cT=1.0, dimEff=3, single=False,
+        transform="affine+diffeo"):
         self.d = Stilde.shape[1]
         self.numS = Stilde.shape[0]
+        self.sigma, self.cA, self.cS, self.cT = sigma, cA, cS, cT
+        self.dimEff, self.single, self.transform = dimEff, single, transform
+        self.weight = 1.0
 
-        self.sigma = sigma
-        # coefficients for the Hamiltonian that weight the different kind of control
-        self.cA = cA  # rotation A
-        self.cS = cS  # non rigid U
-        self.cT = cT  # translation tau
-        self.dimEff = dimEff
-        self.single = single
+        self.components = [self._build_component(name, Stilde) for name in TRANSFORMS[transform]]
 
-        # Compute constants to weigh each kernel norm in RKHS by
-        self.uCoeff = uc.Ucoeff(self.sigma, Stilde, self.cS).uCoeff
-        self.K0 = self.GaussKernelHamiltonian(self.sigma, self.d, self.uCoeff)
+    def _build_component(self, name, Stilde):
+        global_args = (self.cA, self.cT, self.dimEff, self.single)
+        if name == "translation":
+            return TranslationControl(*global_args)
+        if name == "rotation":
+            return RotationControl(*global_args)
+        if name == "scale":
+            return ScaleControl(*global_args)
+        if name == "diffeo":
+            return NonRigidControl(self.sigma, Stilde, self.cS)
+        raise ValueError(f"Unknown component: {name!r}")
 
-        # coefficient use in the final loss
-        self.weight = 1.0 # == gamma
+    @property
+    def uses_pw(self):
+        return any(c.uses_pw for c in self.components)
 
     def get_params(self):
-        params_dict = {
-            "sigma": self.sigma,
-            "cA": self.cA,
-            "cS": self.cS,
-            "cT": self.cT,
-            "dimEff": self.dimEff,
-            "single": self.single,
-            "weight": self.weight,
+        return {
+            "sigma": self.sigma, "cA": self.cA, "cS": self.cS, "cT": self.cT,
+            "dimEff": self.dimEff, "single": self.single,
+            "weight": self.weight, "transform": self.transform,
         }
-        return params_dict
+
+    def H(self, px, pw, qx, qw):
+        return sum(c.energy(px, pw, qx, qw) for c in self.components)
+
+    def velocity(self, x, w, px, pw, qx, qw):
+        vs = [c.velocity(x, w, px, pw, qx, qw) for c in self.components]
+        return sum(v[0] for v in vs), sum(v[1] for v in vs)
+
+    def _grad_H(self, px, pw, qx, qw):
+        inputs = (px, pw, qx, qw)
+        grads = torch.autograd.grad(self.H(*inputs), inputs, create_graph=True, allow_unused=True)
+        return [g if g is not None else torch.zeros_like(x) for g, x in zip(grads, inputs)]
+
+    def forward_system(self, px, pw, qx, qw):
+        Gpx, Gpw, Gqx, Gqw = self._grad_H(px, pw, qx, qw)
+        return -Gqx, -Gqw, Gpx, Gpw
+
+    def system_with_points(self, px, pw, qx, qw, x, w):
+        Gpx, Gpw, Gqx, Gqw = self._grad_H(px, pw, qx, qw)
+        Gx, Gw = self.velocity(x, w, px, pw, qx, qw)
+        return -Gqx, -Gqw, Gpx, Gpw, Gx, Gw
+
+    def __call__(self, px, pw, qx, qw):
+        return self.H(px, pw, qx, qw)
 
     @staticmethod
     def GaussKernelHamiltonian(sigma, d, uCoeff):
@@ -101,87 +193,3 @@ class Hamiltonian:
         return retVal.sum_reduction(
             axis=1
         )  # (K*h).sum_reduction(axis=1) #,  h2, h3.sum_reduction(axis=1)
-
-    def H(self, px, pw, qx, qw):
-        wpq = pw * qw
-        k = self.K0(qx, qx, px, px, wpq, wpq)  # k shape should be N x 1
-        # px = N x 3, qx = N x 3, qw = N x 1
-        A, tau, Alpha = getATauAlpha(px, qx, pw, qw, cA=self.cA, cT=self.cT, dimEff=self.dimEff, single=self.single)
-        
-        Anorm = (A * A).sum()
-        Alphanorm = (Alpha * Alpha).sum()
-        return (
-            k.sum()
-            + (self.cA / 2.0) * Anorm
-            + (self.cT / 2.0) * (tau * tau).sum()
-            + (0.5) * Alphanorm
-        )
-
-    def __call__(self, px, pw, qx, qw):
-        return self.H(px, pw, qx, qw)
-
-
-class HamiltonianSystem(Hamiltonian):
-    def __init__(self, sigma, Stilde, cA=1.0, cS=10.0, cT=1.0, dimEff=3, single=False):
-        super().__init__(sigma, Stilde, cA=cA, cS=cS, cT=cT, dimEff=dimEff, single=single)
-
-    def __call__(self, px, pw, qx, qw):
-        Gpx, Gpw, Gqx, Gqw = torch.autograd.grad(self.H(px, pw, qx, qw), (px, pw, qx, qw), create_graph=True)
-        return -Gqx, -Gqw, Gpx, Gpw
-
-
-class HamiltonianSystemGrid(Hamiltonian):
-    def __init__(self, sigma, Stilde, cA=1.0, cS=10.0, cT=1.0, dimEff=3, single=False):
-        super().__init__(sigma, Stilde, cA=cA, cS=cS, cT=cT, dimEff=dimEff, single=single)
-
-    def __call__(self, px, pw, qx, qw, qgrid, qgridw):
-        gx = qgrid.view(-1, self.d)
-        gw = qgridw.view(-1, 1)
-
-        Gpx, Gpw, Gqx, Gqw = torch.autograd.grad(self.H(px, pw, qx, qw), (px, pw, qx, qw), create_graph=True)
-        A, tau, Alpha = getATauAlpha(px, qx, pw, qw, cA=self.cA, cT=self.cT, dimEff=self.dimEff, single=self.single)
-        xc = (qw * qx).sum(dim=0) / (qw.sum(dim=0))
-        Gg = (
-            getU(self.sigma, self.d, self.uCoeff)(gx, qx, px, pw * qw)
-            + (gx - xc) @ A.T
-            + tau
-            + (gx - xc) @ Alpha
-        )
-        Ggw = (
-            getUdiv(self.sigma, self.d, self.uCoeff)(gx, qx, px, pw * qw) * gw
-            + Alpha.sum() * gw
-        )
-        print(Gpx)
-        print(Gg)
-
-        return -Gqx, -Gqw, Gpx, Gpw, Gg, Ggw
-    
-
-class HamiltonianSystemBackwards(Hamiltonian):
-    """
-    initial = integration from p0 and q0 just with negative velocity field and parameters (e.g. giving same p's)
-    06/25 = first try with just putting -px, -pw replacement only --> doesn't work (seems to give incorrect mapping)
-    06/26 = second try with just changing hamiltonian derivatives in terms of sign (change t --> 1 - t); scale off (too big)
-    7/01 = third try with starting with -p1, but keeping same integration scheme in terms of relation with hamiltonians
-    """
-
-    def __init__(self, sigma, Stilde, cA=1.0, cS=10.0, cT=1.0, dimEff=3, single=False):
-        super().__init__(sigma, Stilde, cA=cA, cS=cS, cT=cT, dimEff=dimEff, single=single)
-
-    def __call__(self, px, pw, qx, qw, T, wT):
-
-        Gpx, Gpw, Gqx, Gqw = torch.autograd.grad(self.H(px, pw, qx, qw), (px, pw, qx, qw), create_graph=True)
-        A, tau, Alpha = getATauAlpha(px, qx, pw, qw, cA=self.cA, cT=self.cT, dimEff=self.dimEff, single=self.single)
-        xc = (qw * qx).sum(dim=0) / (qw.sum(dim=0))
-        Tx = T #.view(-1, self.d)
-        wTw = wT #.view(-1, 1)
-        Gt = (
-            getU(self.sigma, self.d, self.uCoeff)(Tx, qx, px, pw * qw)
-            + (Tx - xc) @ A.T
-            + tau
-            + (Tx - xc) @ Alpha
-        )
-        Gtw = (
-            getUdiv(self.sigma, self.d, self.uCoeff)(Tx, qx, px, pw * qw) * wTw + Alpha.sum() * wTw
-        )
-        return -Gqx, -Gqw, Gpx, Gpw, Gt, Gtw

@@ -14,9 +14,10 @@ torch.set_printoptions(precision=6)
 savedir = os.path.join("output", "2D_amygdala")
 
 
-source_file = os.path.join("..", "..", "data", "2D_amygdala","hat_run77_10000points_real.pt")
+source_file = os.path.join("..", "..", "data", "2D_amygdala","hat_run77_10000points_real_source.pt")
+target_file = os.path.join("..", "..", "data", "2D_amygdala","hat_run77_10000points_real_target.pt")
 S, w_S, zeta_S = torch.load(source_file)
-T, w_T, zeta_T = torch.load(target_file)
+T, w_T, zeta_T, _ = torch.load(target_file)
 
 d = 2
 dimEff = 2

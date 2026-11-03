@@ -1,23 +1,30 @@
 import os, math
 from sys import path as sys_path
+
 sys_path.append(os.path.join("..", ".."))
 
 import torch
 import xmodmap
+import xmodmap.preprocess
 
 # set random seed
 torch.manual_seed(0)
 torch.set_printoptions(precision=6)
-
-
+device = "cuda" if torch.cuda.is_available() * 0 else "cpu"
+torch.set_default_device(device)
 # Data Loading: 8-876; 9-856; 10-836; 11-816; 12-796
 savedir = os.path.join("output", "2D_amygdala")
 
 
 source_file = os.path.join("..", "..", "data", "2D_amygdala","hat_run77_10000points_real_source.pt")
 target_file = os.path.join("..", "..", "data", "2D_amygdala","hat_run77_10000points_real_target.pt")
-S, w_S, zeta_S = torch.load(source_file)
-T, w_T, zeta_T, _ = torch.load(target_file)
+S, w_S, zeta_S = torch.load(source_file, map_location=device).values()
+T, w_T, zeta_T, _, _, _ = torch.load(target_file, map_location=device).values()
+
+w_S = w_S[:, None]
+w_T = w_T[:, None]
+
+Stilde, Ttilde, s, m = xmodmap.preprocess.rescaleData(S, T)
 
 d = 2
 dimEff = 2
@@ -38,47 +45,8 @@ lambInit = -1
 single = False
 gamma = 0.1
 
-
-from xmodmap.preprocess.makePQ_legacy import makePQ
-(
-    w_S,
-    w_T,
-    zeta_S,
-    zeta_T,
-    q0,
-    p0,
-    numS,
-    Stilde,
-    Ttilde,
-    s,
-    m,
-    pi_STinit,
-    lamb0,
-) = makePQ(S, nu_S, T, nu_T,
-           Csqpi=Csqpi,
-           lambInit=lambInit,
-           Csqlamb=Csqlamb)
-
-sm = {
-    "s": s,
-    "m": m,
-    "cA": cA,
-    "cT": cT,
-    "cS": cS,
-    "sigmaRKHS": sigmaRKHS,
-    "d": d,
-    "dimEff": dimEff,
-    "single": single
-}
-
-torch.save(sm,os.path.join(savedir,"sm.pt"))
-
-
-# Model Setup
-
 ## Varifold distance without boundaries
 dataloss = xmodmap.distance.LossVarifoldNorm(sigmaVar, w_T, zeta_T, Ttilde)   # Dream of : (sigmaVar, T, nu_T)
-dataloss.normalize_across_scale(Stilde, w_S, zeta_S)
 dataloss.weight = 1.
 
 ## non-rigid and affine deformations

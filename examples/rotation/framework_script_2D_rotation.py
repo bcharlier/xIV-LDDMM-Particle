@@ -2,7 +2,7 @@ import os, math
 from sys import path as sys_path
 
 sys_path.append(os.path.join("..", ".."))
-
+sys_path.append("/Users/yixie/Documents/MillerLab/xIV-LDDMM-Particle")
 import torch
 import xmodmap
 import xmodmap.preprocess
@@ -15,21 +15,17 @@ torch.set_default_device(device)
 # Data Loading: 8-876; 9-856; 10-836; 11-816; 12-796
 savedir = os.path.join("output", "2D_amygdala")
 
-
-source_file = os.path.join("..", "..", "data", "2D_amygdala","hat_run77_10000points_real_source.pt")
-target_file = os.path.join("..", "..", "data", "2D_amygdala","hat_run77_10000points_real_target.pt")
+source_file = os.path.join("/Users/yixie/Documents/MillerLab/xIV-LDDMM-Particle/data/2D_amygdala/onehot.pt")
+target_file = os.path.join("/Users/yixie/Documents/MillerLab/xIV-LDDMM-Particle/data/2D_amygdala/onehot_rotation.pt")
 S, w_S, zeta_S = torch.load(source_file, map_location=device).values()
-T, w_T, zeta_T, _, _, _ = torch.load(target_file, map_location=device).values()
-
-w_S = w_S[:, None]
-w_T = w_T[:, None]
+T, w_T, zeta_T = torch.load(target_file, map_location=device).values()
 
 Stilde, Ttilde, s, m = xmodmap.preprocess.rescaleData(S, T)
 
 d = 2
 dimEff = 2
-sigmaRKHS = [0.2,0.1, 0.05]
-sigmaVar = [0.2, 0.1, 0.05, 0.02] #[0.5, 0.2, 0.05, 0.02]  # as of 3/16, should be fraction of total domain of S+T #10.0
+sigmaRKHS = [0.05]
+sigmaVar = [0.2] #[0.5, 0.2, 0.05, 0.02]  # as of 3/16, should be fraction of total domain of S+T #10.0
 steps = 30
 beta = None
 res = 1.0
@@ -64,14 +60,37 @@ variable_init = {
     "qw": w_S.clone().detach().requires_grad_(True),
     "zeta_S": zeta_S,
 }
+def check_tensor(name, x):
+    print(
+        f"{name}: shape={tuple(x.shape)}, "
+        f"dtype={x.dtype}, "
+        f"finite={torch.isfinite(x).all().item()}, "
+        f"min={x.min().item():.6e}, "
+        f"max={x.max().item():.6e}"
+    )
 
+for name, x in {
+    "S": S,
+    "T": T,
+    "w_S": w_S,
+    "w_T": w_T,
+    "zeta_S": zeta_S,
+    "zeta_T": zeta_T,
+    "Stilde": Stilde,
+    "Ttilde": Ttilde,
+}.items():
+    check_tensor(name, x)
+
+print("Zero source weights:", (w_S == 0).sum().item())
+print("Nonpositive source weights:", (w_S <= 0).sum().item())
 variable_to_optimize = ["px", "pw"]
 
 precond = {
     "px": torch.rsqrt(kScale),
     "pw": torch.rsqrt(kScale) / dimEff / w_S,
 }
-
+for name, value in precond.items():
+    print(name, torch.isfinite(value).all().item())
 loss = xmodmap.model.SingleModality(hamiltonian, shooting, dataloss)
 loss.init(variable_init, variable_to_optimize, precond=precond, savedir=savedir)
 #loss.resume(variable_init, os.path.join(savedir, 'checkpoint.pt'))

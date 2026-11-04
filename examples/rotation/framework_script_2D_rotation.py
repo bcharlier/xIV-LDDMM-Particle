@@ -15,8 +15,8 @@ torch.set_default_device(device)
 # Data Loading: 8-876; 9-856; 10-836; 11-816; 12-796
 savedir = os.path.join("output", "2D_amygdala")
 
-source_file = os.path.join("/Users/yixie/Documents/MillerLab/xIV-LDDMM-Particle/data/2D_amygdala/onehot.pt")
-target_file = os.path.join("/Users/yixie/Documents/MillerLab/xIV-LDDMM-Particle/data/2D_amygdala/onehot_rotation.pt")
+source_file = os.path.join(os.path.dirname(__file__), "..", "..", "data", "2D_amygdala", "onehot.pt")
+target_file = os.path.join(os.path.dirname(__file__), "..", "..","data", "2D_amygdala", "onehot_rotation.pt")
 S, w_S, zeta_S = torch.load(source_file, map_location=device).values()
 T, w_T, zeta_T = torch.load(target_file, map_location=device).values()
 

@@ -21,7 +21,7 @@ Stilde, Ttilde, s, m = xmodmap.preprocess.rescaleData(S, T)
 
 d = 2
 dimEff = 2
-sigmaRKHS = [0.05]
+sigmaRKHS = [0.2, 0.1, 0.05]
 sigmaVar = [0.2] 
 kScale = torch.tensor(1.)
 cA, cT, cS = 1., 1., 1.
@@ -33,7 +33,7 @@ dataloss = xmodmap.distance.LossVarifoldNorm(sigmaVar, w_T, zeta_T, Ttilde)
 dataloss.weight = 1.
 
 ## non-rigid and affine deformations
-hamiltonian = xmodmap.deformation.Hamiltonian(sigmaRKHS, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single)
+hamiltonian = xmodmap.deformation.Hamiltonian(sigmaRKHS, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single, transform="rigid")
 hamiltonian.weight = gamma
 shooting = xmodmap.deformation.Shooting(hamiltonian, nt=10)
 
@@ -57,4 +57,12 @@ precond = {
 
 loss = xmodmap.model.SingleModality(hamiltonian, shooting, dataloss)
 loss.init(variable_init, variable_to_optimize, precond=precond)
-loss.optimize(4)
+loss.optimize(40)
+
+# Plot source, target and deformed source (with time slider)
+import xmodmap.plot
+
+variables_optimum = loss.get_variables_optimized()
+trajectory = shooting(*(variables_optimum[k] for k in ["px", "pw", "qx", "qw"]))
+
+xmodmap.plot.plot_registration_2d(Stilde, w_S, zeta_S, Ttilde, w_T, zeta_T, trajectory)

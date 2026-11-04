@@ -4,8 +4,9 @@ from pykeops.torch import Vi, Vj
 
 from xmodmap.deformation.control.nonRigid import getU, getUdiv
 from xmodmap.deformation.control.affine import getA, getTau, getAlpha, getBarycenter
-import xmodmap.deformation.Ucoeff as uc
-from xmodmap.deformation.transforms import TRANSFORMS
+from xmodmap.deformation import TRANSFORMS
+from . import Ucoeff as uc
+
 
 class Control:
     """One term of the Hamiltonian and its velocity. Subclasses are added together by Hamiltonian."""

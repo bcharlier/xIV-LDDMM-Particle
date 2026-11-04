@@ -96,13 +96,20 @@ def plot_registration_2d(
 
     if trajectory is not None and len(Q) > 1:
         slider = Slider(
-            fig.add_axes([0.25, 0.04, 0.5, 0.03]),
+            fig.add_axes([0.3, 0.05, 0.4, 0.02]),
             "time step",
             0,
             len(Q) - 1,
             valinit=0,
             valstep=1,
+            color="dimgray",
+            track_color="lightgray",
+            handle_style={"facecolor": "dimgray", "edgecolor": "white", "size": 12},
         )
+        slider.label.set_color("dimgray")
+        slider.valtext.set_color("dimgray")
+        slider.ax.spines[:].set_visible(False)
+        slider.vline.set_visible(False)  # valinit marker
 
         def update(val):
             k = int(slider.val)

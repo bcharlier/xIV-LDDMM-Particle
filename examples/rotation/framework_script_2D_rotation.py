@@ -24,7 +24,7 @@ dimEff = 2
 sigmaRKHS = [0.05]
 sigmaVar = [0.2] 
 kScale = torch.tensor(1.)
-cA, cT, cS = 1.0
+cA, cT, cS = 1., 1., 1.
 single = False
 gamma = 0.1
 
@@ -56,5 +56,5 @@ precond = {
 }
 
 loss = xmodmap.model.SingleModality(hamiltonian, shooting, dataloss)
-loss.init(variable_init, variable_to_optimize, precond=precond, savedir=savedir)
+loss.init(variable_init, variable_to_optimize, precond=precond)
 loss.optimize(4)

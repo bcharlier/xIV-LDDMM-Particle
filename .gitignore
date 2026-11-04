@@ -164,7 +164,7 @@ cython_debug/
 *.npz
 *.png
 *.log
-
+output/
 
 # vscode
 .vscode/

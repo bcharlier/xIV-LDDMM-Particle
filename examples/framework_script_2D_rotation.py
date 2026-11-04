@@ -21,9 +21,8 @@ Stilde, Ttilde, s, m = xmodmap.preprocess.rescaleData(S, T)
 
 d = 2
 dimEff = 2
-sigmaRKHS = [0.05]
+sigmaRKHS = [0.2, 0.1, 0.05]
 sigmaVar = [0.2] 
-kScale = torch.tensor(1.)
 cA, cT, cS = 1., 1., 1.
 single = False
 gamma = 0.1
@@ -51,8 +50,8 @@ variable_init = {
 variable_to_optimize = ["px", "pw"]
 
 precond = {
-    "px": torch.rsqrt(kScale),
-    "pw": torch.rsqrt(kScale) / dimEff / w_S,
+    "px": 1.,
+    "pw": 1. / dimEff / w_S,
 }
 
 loss = xmodmap.model.SingleModality(hamiltonian, shooting, dataloss)

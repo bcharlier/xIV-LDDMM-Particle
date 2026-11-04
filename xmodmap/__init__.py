@@ -1,6 +1,9 @@
 import torch
 import numpy as np
 
+
+torch.set_printoptions(precision=6)
+
 # Set data type in: fromScratHamiltonianAT, analyzeOutput, getInput, initialize
 use_cuda = torch.cuda.is_available()
 if use_cuda:

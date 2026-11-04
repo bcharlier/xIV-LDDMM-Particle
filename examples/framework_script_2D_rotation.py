@@ -1,19 +1,19 @@
 import os
 from sys import path as sys_path
-sys_path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys_path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import torch
 import xmodmap
 import xmodmap.preprocess
 
 # set random seed
-torch.manual_seed(0)
-torch.set_printoptions(precision=6)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 torch.set_default_device(device)
 
-source_file = os.path.join(os.path.dirname(__file__), "..", "..", "data", "2D_amygdala", "onehot.pt")
-target_file = os.path.join(os.path.dirname(__file__), "..", "..","data", "2D_amygdala", "onehot_rotation.pt")
+data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "2D_amygdala")
+
+source_file = os.path.join(data_dir, "onehot.pt")
+target_file = os.path.join(data_dir, "onehot_rotation.pt")
 S, w_S, zeta_S = torch.load(source_file, map_location=device).values()
 T, w_T, zeta_T = torch.load(target_file, map_location=device).values()
 

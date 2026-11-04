@@ -35,7 +35,7 @@ dataloss.weight = 1.
 ## non-rigid and affine deformations
 hamiltonian = xmodmap.deformation.Hamiltonian(sigmaRKHS, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single)
 hamiltonian.weight = gamma
-shooting = xmodmap.deformation.Shooting(sigmaRKHS, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single)
+shooting = xmodmap.deformation.Shooting(hamiltonian, nt=10)
 
 
 # Optimization

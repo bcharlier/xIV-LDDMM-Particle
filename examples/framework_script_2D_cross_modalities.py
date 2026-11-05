@@ -12,8 +12,8 @@ torch.set_default_device(device)
 
 data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "2D_NisslToTau")
 
-source_file = os.path.join(data_dir, "nissl.pt")
-target_file = os.path.join(data_dir, "tau.pt")
+source_file = os.path.join(data_dir, "nissl_32bin.pt")
+target_file = os.path.join(data_dir, "tau_32bin.pt")
 S, w_S, zeta_S = torch.load(source_file, map_location=device).values()
 T, w_T, zeta_T = torch.load(target_file, map_location=device).values()
 
@@ -60,7 +60,7 @@ precond = {
     "pi_ST": 1.,
 }
 
-loss = xmodmap.model.SingleModality(hamiltonian, shooting, dataloss)
+loss = xmodmap.model.CrossModality(hamiltonian, shooting, dataloss, piLoss)
 loss.init(variable_init, variable_to_optimize, precond=precond)
 loss.optimize(10)
 

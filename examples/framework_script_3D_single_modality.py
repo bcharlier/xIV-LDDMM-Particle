@@ -17,7 +17,7 @@ target_file = os.path.join(data_dir, "MTL_lf_target.pt")
 S, w_S, zeta_S = torch.load(source_file, map_location=device).values()
 T, w_T, zeta_T = torch.load(target_file, map_location=device).values()
 
-S = S*2
+S = S @ xmodmap.preprocess.get3DRotMatrixAxis(torch.pi/6, ax=[.2, 1, 0])
 
 Stilde, Ttilde, s, m = xmodmap.preprocess.rescaleData(S, T)
 
@@ -28,7 +28,6 @@ d = 3
 dimEff = 3
 sigmaRKHS = [0.2, 0.1, 0.05]
 sigmaVar = [0.2] 
-kScale = torch.tensor(1.)
 cA, cT, cS = 1., 1., 1.
 single = False
 gamma = 0.1
@@ -38,9 +37,9 @@ dataloss = xmodmap.distance.LossVarifoldNorm(sigmaVar, w_T, zeta_T, Ttilde)
 dataloss.weight = 1.
 
 ## non-rigid and affine deformations
-hamiltonian = xmodmap.deformation.Hamiltonian(sigmaRKHS, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single, transform="affine+diffeo")
+hamiltonian = xmodmap.deformation.Hamiltonian(sigmaRKHS, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single, transform="affine")
 hamiltonian.weight = gamma
-shooting = xmodmap.deformation.Shooting(hamiltonian, nt=10)
+shooting = xmodmap.deformation.Shooting(hamiltonian, nt=1)
 
 
 # Optimization
@@ -56,8 +55,8 @@ variable_init = {
 variable_to_optimize = ["px", "pw"]
 
 precond = {
-    "px": torch.rsqrt(kScale),
-    "pw": torch.rsqrt(kScale) / dimEff / w_S,
+    "px": 1.,
+    "pw": 1. / dimEff / w_S,
 }
 
 loss = xmodmap.model.SingleModality(hamiltonian, shooting, dataloss)
@@ -68,6 +67,6 @@ loss.optimize(40)
 import xmodmap.plot
 
 variables_optimum = loss.get_variables_optimized()
-trajectory = shooting(*(variables_optimum[k] for k in ["px", "pw", "qx", "qw"]))
+trajectory = xmodmap.deformation.Shooting(hamiltonian, nt=30)(*(variables_optimum[k] for k in ["px", "pw", "qx", "qw"]))
 
 xmodmap.plot.plot_registration_3d(Stilde, w_S, zeta_S, Ttilde, w_T, zeta_T, trajectory)

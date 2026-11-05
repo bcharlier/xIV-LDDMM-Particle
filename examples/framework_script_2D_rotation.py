@@ -32,9 +32,9 @@ dataloss = xmodmap.distance.LossVarifoldNorm(sigmaVar, w_T, zeta_T, Ttilde)
 dataloss.weight = 1.
 
 ## non-rigid and affine deformations
-hamiltonian = xmodmap.deformation.Hamiltonian(sigmaRKHS, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single, transform="diffeo")
+hamiltonian = xmodmap.deformation.Hamiltonian(sigmaRKHS, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single, transform="rigid")
 hamiltonian.weight = gamma
-shooting = xmodmap.deformation.Shooting(hamiltonian, nt=10)
+shooting = xmodmap.deformation.Shooting(hamiltonian, nt=1)
 
 
 # Optimization
@@ -62,6 +62,6 @@ loss.optimize(10)
 import xmodmap.plot
 
 variables_optimum = loss.get_variables_optimized()
-trajectory = shooting(*(variables_optimum[k] for k in ["px", "pw", "qx", "qw"]))
+trajectory = xmodmap.deformation.Shooting(hamiltonian, nt=30)(*(variables_optimum[k] for k in ["px", "pw", "qx", "qw"]))
 
 xmodmap.plot.plot_registration_3d(Stilde, w_S, zeta_S, Ttilde, w_T, zeta_T, trajectory)

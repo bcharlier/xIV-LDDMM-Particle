@@ -155,7 +155,7 @@ def rescaleDataSM(X, s, m):
     Xtilde = (X - m) * (1.0 / s)
     return Xtilde
 
-def center_data(S, T, w_S=None, w_T=None):
+def centerData(S, T, w_S=None, w_T=None):
     """Translate S and T so each has its (weighted) centroid at the origin.
 
     S: (N, d) points, T: (M, d) points

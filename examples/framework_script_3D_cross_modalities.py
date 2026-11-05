@@ -19,7 +19,7 @@ T, w_T, zeta_T = torch.load(target_file, map_location=device).values()
 print(w_S.shape)
 w_S = w_S.reshape(-1, 1)
 w_T = w_T.reshape(-1, 1)
-S, T, c_S, c_T = xmodmap.preprocess.center_data(S, T, w_S, w_T)
+S, T, c_S, c_T = xmodmap.preprocess.centerData(S, T, w_S, w_T)
 Stilde, Ttilde, s, m = xmodmap.preprocess.rescaleData(S, T)
 
 d = 3

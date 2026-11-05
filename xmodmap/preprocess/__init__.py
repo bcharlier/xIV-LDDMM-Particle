@@ -1,1 +1,1 @@
-from .preprocess import rescaleData, get3DRotMatrixAxis,center_data
+from .preprocess import rescaleData, get3DRotMatrixAxis,centerData

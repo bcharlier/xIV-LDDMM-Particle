@@ -9,8 +9,7 @@ from . import Ucoeff as uc
 
 
 class Control:
-    """One term of the Hamiltonian and its velocity. Subclasses are added together by Hamiltonian."""
-    uses_pw = False  
+    """One term of the Hamiltonian and its velocity. Subclasses are added together by Hamiltonian.""" 
 
     def energy(self, px, pw, qx, qw):
         raise NotImplementedError
@@ -46,7 +45,6 @@ class RotationControl(GlobalControl):
 
 
 class ScaleControl(GlobalControl):
-    uses_pw = True
 
     def energy(self, px, pw, qx, qw):
         Alpha = getAlpha(px, qx, pw, qw, dimEff=self.dimEff, single=self.single)
@@ -58,7 +56,6 @@ class ScaleControl(GlobalControl):
 
 
 class NonRigidControl(Control):
-    uses_pw = True
 
     def __init__(self, sigma, Stilde, cS):
         d = Stilde.shape[1]
@@ -97,10 +94,6 @@ class Hamiltonian:
         if name == "diffeo":
             return NonRigidControl(self.sigma, Stilde, self.cS)
         raise ValueError(f"Unknown component: {name!r}")
-
-    @property
-    def uses_pw(self):
-        return any(c.uses_pw for c in self.components)
 
     def get_params(self):
         return {

@@ -77,21 +77,35 @@ def get3DRotMatrix(thetaX, thetaY, thetaZ):
 
 
 def get3DRotMatrixAxis(theta, ax=None):
-    # ax = vector on unit sphere (e.g.
-    # theta is numpy number in radians
+    # Ensure theta is a tensor
+    if not isinstance(theta, torch.Tensor):
+        theta = torch.tensor(theta, dtype=torch.float32)
+
+    # Handle default axis if None
     if ax is None:
-        ax = np.zeros((3, 1))
-        ax[1] = 1.0
-    K = np.zeros((3, 3))
-    K[0, 1] = -ax[2]
-    K[0, 2] = ax[1]
-    K[1, 0] = ax[2]
-    K[2, 0] = -ax[1]
-    K[1, 2] = -ax[0]
-    K[2, 1] = ax[0]
-    # A = np.cross(-theta*ax,np.identity(3),axisa=0,axisb=0)
-    R = sp.linalg.expm(theta * K)
-    return torch.from_numpy(R)
+        ax = torch.tensor([0.0, 1.0, 0.0], dtype=theta.dtype, device=theta.device)
+    elif not isinstance(ax, torch.Tensor):
+        ax = torch.tensor(ax, dtype=theta.dtype, device=theta.device)
+
+    # Flatten and extract components
+    ax = ax.view(-1)
+    ax = ax / torch.norm(ax)
+    
+    ax_x, ax_y, ax_z = ax[0], ax[1], ax[2]
+
+    # Construct the skew-symmetric cross-product matrix K
+    K = torch.zeros((3, 3), dtype=theta.dtype, device=theta.device)
+    K[0, 1] = -ax_z
+    K[0, 2] = ax_y
+    K[1, 0] = ax_z
+    K[2, 0] = -ax_y
+    K[1, 2] = -ax_x
+    K[2, 1] = ax_x
+
+    # Compute the matrix exponential (differentiable equivalent of scipy.linalg.expm)
+    R = torch.linalg.matrix_exp(theta * K)
+    
+    return R
 
 
 def rescaleData(S, T):

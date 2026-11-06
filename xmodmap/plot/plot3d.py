@@ -147,7 +147,7 @@ def plot_registration_3d(
     title = plotter.add_text("", position="upper_left", font_size=10)
 
     def update(value):
-        k = int(round(value))
+        k = int(round(value)); cur["k"] = k
         # in-place update keeps the actor, so the renderer picks the new geometry up
         new = build(Q[k], W[k], cur["c"])
         if gaussian:

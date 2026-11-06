@@ -48,6 +48,7 @@ def plot_registration_3d(
     w_T,
     zeta_T,
     trajectory=None,
+    pi_ST=None,
     radius_scale=None,
     cmap="tab10",
     style="gaussian",
@@ -77,12 +78,16 @@ def plot_registration_3d(
 
     Returns the `pyvista.Plotter`.
     """
+    import matplotlib
     import pyvista as pv
 
     is_2d = to_numpy(S).shape[1] < 3
     S, T = pad_to_3d(S), pad_to_3d(T)
     wS, wT = to_numpy(w_S).reshape(-1), to_numpy(w_T).reshape(-1)
     cS, cT = feature_to_scalar(zeta_S), feature_to_scalar(zeta_T)
+    cS_mapped = feature_to_scalar(zeta_S @ pi_ST) if pi_ST is not None else cS
+    cur = {"c": cS, "k": 0}   # color of the deformed source / current time step
+
 
     if trajectory is not None:
         Q, W = unpack_trajectory(trajectory, range(to_numpy(trajectory[0][2]).shape[1]))
@@ -122,7 +127,7 @@ def plot_registration_3d(
     plotter.add_text("Target", font_size=10)
     add(build(T, wT, cT))
     plotter.subplot(0, 2)
-    deformed = build(Q[0], W[0], cS)
+    deformed = build(Q[0], W[0], cur["c"])
     add(deformed)
     overlay = add(build(T, wT, cT), opacity=target_opacity, pickable=False)
 
@@ -144,10 +149,14 @@ def plot_registration_3d(
     def update(value):
         k = int(round(value))
         # in-place update keeps the actor, so the renderer picks the new geometry up
-        new = build(Q[k], W[k], cS)
+        new = build(Q[k], W[k], cur["c"])
         if gaussian:
             deformed.points = new.points
             deformed["radius"] = new["radius"]
+            deformed["feature"] = new["feature"]
+            # pyvista colors through a precomputed "__rgba__" array, so refresh it too
+            lo, hi = clim
+            deformed["__rgba__"] = (matplotlib.colormaps[cmap].resampled(256)((new["feature"] - lo) / max(hi - lo, 1e-12)) * 255).astype(np.uint8)
             deformed.Modified()
         else:
             deformed.copy_from(new)
@@ -161,6 +170,12 @@ def plot_registration_3d(
         position=(10, 10),
         size=30,
     )
+    if pi_ST is not None:
+        def toggle_map(on):
+            cur["c"] = cS_mapped if on else cS
+            update(cur["k"])
+        plotter.add_checkbox_button_widget(toggle_map, value=False, position=(10, 50), size=30)
+        plotter.add_text("map by pi_ST", position=(50, 55), font_size=8)
     plotter.add_text("target", position=(50, 15), font_size=8)
     if trajectory is not None and len(Q) > 1:
         plotter.add_slider_widget(

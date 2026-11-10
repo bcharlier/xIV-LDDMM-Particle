@@ -1,5 +1,6 @@
 import numpy as np
-
+import matplotlib
+from matplotlib.colors import ListedColormap
 from .utils import (
     default_radius_scale,
     pad_to_3d,
@@ -97,13 +98,20 @@ def plot_registration_3d(
 
     if radius_scale is None:
         radius_scale = default_radius_scale([S, T] + Q, [wS, wT] + W, power=1 / 3)
-    clim = (min(cS.min(), cT.min()), max(cS.max(), cT.max()))
+
 
     plotter = pv.Plotter(shape=(1, 3), window_size=list(window_size))
     if style not in ("gaussian", "sphere"):
         raise ValueError(f"style must be 'gaussian' or 'sphere', got {style!r}")
     gaussian = style == "gaussian"
-    kw = dict(scalars="feature", cmap=cmap, clim=clim, show_scalar_bar=False)
+
+
+    K = int(max(cS.max(), cT.max())) + 1
+    base = matplotlib.colormaps["tab20" if K > 10 else "tab10"]
+    cmap_d = ListedColormap([base(i % base.N) for i in range(K)])   # exactly K colors
+    clim = (-0.5, K - 0.5)
+    kw = dict(scalars="feature", cmap=cmap_d, clim=clim, n_colors=K, show_scalar_bar=False)
+
 
     def build(pts, w, c):
         if gaussian:
@@ -156,7 +164,7 @@ def plot_registration_3d(
             deformed["feature"] = new["feature"]
             # pyvista colors through a precomputed "__rgba__" array, so refresh it too
             lo, hi = clim
-            deformed["__rgba__"] = (matplotlib.colormaps[cmap].resampled(256)((new["feature"] - lo) / max(hi - lo, 1e-12)) * 255).astype(np.uint8)
+            deformed["__rgba__"] = (cmap_d((new["feature"] - clim[0]) / K) * 255).astype(np.uint8)
             deformed.Modified()
         else:
             deformed.copy_from(new)

@@ -23,7 +23,7 @@ class Ucoeff():
 
 
     def GaussKernelSpaceSingle(self, sig):
-        """
+        r"""
         k(x^\sigma - y^\sigma)
         """
         x, y = Vi(0, self.d) / sig, Vj(1, self.d) / sig

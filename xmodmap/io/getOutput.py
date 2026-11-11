@@ -134,7 +134,7 @@ def analyzeLongitudinalMass(listOfNu, S, ages, savename, labels):
     for i in range(len(labels)):
         ax[i].hist(
             slopes[i],
-            label="Mean $\pm$ Std = {0:.6f} $\pm$ {1:.6f}".format(
+            label=r"Mean $\pm$ Std = {0:.6f} $\pm$ {1:.6f}".format(
                 np.mean(slopes[i]), np.std(slopes[i])
             ),
         )

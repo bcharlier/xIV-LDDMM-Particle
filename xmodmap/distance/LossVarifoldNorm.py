@@ -49,7 +49,7 @@ class LossVarifoldNorm:
         return K.sum_reduction(axis=1)
     
     def GaussLinKernel(self, sigma_list, beta, labs): #sigma, d, l, beta):
-        """
+        r"""
         \sum_sigma \beta/2 * |\mu_s - \mu_T|^2_\sigma
         """
 

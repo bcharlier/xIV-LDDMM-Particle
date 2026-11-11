@@ -1,6 +1,14 @@
+import os
 import torch
 import numpy as np
 
+
+def read_version(version_file):
+    with open(version_file, encoding="utf-8") as v:
+        return v.read().rstrip()
+
+
+__version__ = read_version(os.path.join(os.path.dirname(__file__), "..", "version"))
 
 torch.set_printoptions(precision=6)
 

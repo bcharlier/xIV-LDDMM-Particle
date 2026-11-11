@@ -7,14 +7,15 @@ torch.set_printoptions(precision=6)
 # Set data type in: fromScratHamiltonianAT, analyzeOutput, getInput, initialize
 use_cuda = torch.cuda.is_available()
 if use_cuda:
-    dtype = torch.cuda.FloatTensor  # DoubleTensor
     map_location = lambda storage, loc: storage.cuda(0)
+    device = torch.device("cuda:0")
 else:
-    dtype = torch.FloatTensor
+    device = torch.device("cpu")
     map_location = torch.device("cpu")
 
-torch.set_default_tensor_type(dtype)
 torch_dtype = torch.float32
+torch.set_default_dtype(torch_dtype)
+torch.set_default_device(device)
 
 
 def normalize(x, p=1.0, dim=1):

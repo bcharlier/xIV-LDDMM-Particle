@@ -24,10 +24,10 @@ Stilde, Ttilde, s, m = xmodmap.preprocess.rescaleData(S, T)
 
 d = 3
 dimEff = 3
-sigmaRKHS = [0.2, 0.1, 0.05]
-sigmaVar = [0.2] 
-cA, cT, cS = 1., 1., 1.
-single = False
+sigmaRKHS = [0.1, 0.025]
+sigmaVar = [0.1] 
+cA, cT, cS = 1., 1., 10.
+single = True
 gamma = 0.1
 
 ## Varifold distance without boundaries
@@ -35,8 +35,8 @@ dataloss = xmodmap.distance.LossVarifoldNorm(sigmaVar, w_T, zeta_T, Ttilde)
 dataloss.weight = 1.
 
 ## Cross-Modality
-piLoss = xmodmap.distance.PiRegularizationSystem(zeta_S, zeta_T, w_T)
-piLoss.weight = gamma / torch.log(torch.tensor(zeta_T.shape[-1]))
+piLoss = xmodmap.distance.PiRegularizationSystem(zeta_S, zeta_T, w_T, norm=True)
+piLoss.weight = 0.
 
 ## non-rigid and affine deformations
 hamiltonian = xmodmap.deformation.Hamiltonian(sigmaRKHS, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single, transform="affine")
@@ -73,12 +73,10 @@ import xmodmap.plot
 variables_optimum = loss.get_variables_optimized()
 trajectory = shooting(*(variables_optimum[k] for k in ["px", "pw", "qx", "qw"]))
 
-precondVar = loss.precond(loss.variables)   # dict of optimized variables
-pi_ST = precondVar["pi_ST"].detach() ** 2   # actual (nonnegative) coupling, shape (n_zeta_S, n_zeta_T)
+pi_ST = variables_optimum["pi_ST"].detach() ** 2   # actual (nonnegative) coupling, shape (n_zeta_S, n_zeta_T)
 
-torch.set_printoptions(precision=4, sci_mode=False)
-print("pi_ST =\n", pi_ST)
-print("shape:", pi_ST.shape)
+torch.set_printoptions(precision=2, sci_mode=False)
+print("pi_ST =\n", pi_ST.detach().cpu().numpy())
 print("row sums:", pi_ST.sum(dim=1))
 print("col sums:", pi_ST.sum(dim=0))
 

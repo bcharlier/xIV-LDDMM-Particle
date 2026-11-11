@@ -2,6 +2,8 @@
     Copy of LBFGS from pytorch replacing first step with minimum of (1. and 1/||gradient||_L1)
     with minimum of (1. and 1/||gradient||_L2). This ensures identical behavior in the optimization 
     with different N's.
+
+    TODO: see weak-wolfe line search in Lemarechal
 """
 
 import torch

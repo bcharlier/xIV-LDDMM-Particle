@@ -16,7 +16,7 @@ from xmodmap.deformation.Shooting import Abstract_Shooting
 from baseline_io import read_baseline, write_baseline
 
 
-BASELINE = Path(__file__).with_name("baseline_integrator.csv")
+BASELINE = Path(__file__).with_name("baseline_integrator.csv.gz")
 
 
 def calculate_results():

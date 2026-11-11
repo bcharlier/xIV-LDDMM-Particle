@@ -18,7 +18,7 @@ import xmodmap.preprocess
 from baseline_io import read_baseline, write_baseline
 
 
-BASELINE = Path(__file__).with_name("baseline_2d_rotation_registration.csv")
+BASELINE = Path(__file__).with_name("baseline_2d_rotation_registration.csv.gz")
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "2D_amygdala"
 
 

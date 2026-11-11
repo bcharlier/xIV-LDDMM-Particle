@@ -1,0 +1,22 @@
+name: Unit tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unittest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+      - name: Run unit tests
+        run: .venv/bin/python -m unittest discover -s unittests -p 'test_*.py' -b

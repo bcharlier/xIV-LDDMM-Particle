@@ -1,6 +1,7 @@
 """Read and update numerical CSV baselines with Git provenance."""
 
 import csv
+import gzip
 import math
 import subprocess
 from pathlib import Path
@@ -8,6 +9,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 METADATA_KEYS = ("__commit__", "__worktree_dirty__")
+
+
+def open_baseline(path, mode):
+    if path.suffix == ".gz":
+        return gzip.open(path, f"{mode}t", newline="", encoding="utf-8")
+    return path.open(mode, newline="", encoding="utf-8")
 
 
 def write_baseline(path, results):
@@ -24,7 +31,7 @@ def write_baseline(path, results):
 
     commit = git("rev-parse", "HEAD")
     dirty = bool(git("status", "--porcelain", "--untracked-files=normal"))
-    with path.open("w", newline="", encoding="utf-8") as file:
+    with open_baseline(path, "w") as file:
         writer = csv.writer(file)
         writer.writerow(("result", "value"))
         writer.writerow((METADATA_KEYS[0], commit))
@@ -33,7 +40,7 @@ def write_baseline(path, results):
 
 
 def read_baseline(path):
-    with path.open(newline="", encoding="utf-8") as file:
+    with open_baseline(path, "r") as file:
         reader = csv.reader(file)
         if next(reader, None) != ["result", "value"]:
             raise ValueError(f"Invalid baseline header in {path}")

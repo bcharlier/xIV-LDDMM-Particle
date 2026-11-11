@@ -14,7 +14,7 @@ from xmodmap.distance import LossVarifoldNorm
 from baseline_io import read_baseline, write_baseline
 
 
-BASELINE = Path(__file__).with_name("baseline_varifold_norm.csv")
+BASELINE = Path(__file__).with_name("baseline_varifold_norm.csv.gz")
 
 
 def calculate_results():

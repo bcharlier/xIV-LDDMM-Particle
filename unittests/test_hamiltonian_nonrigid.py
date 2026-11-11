@@ -16,7 +16,7 @@ from xmodmap.deformation import Hamiltonian
 from baseline_io import read_baseline, write_baseline
 
 
-BASELINE = Path(__file__).with_name("baseline_hamiltonian_nonrigid.csv")
+BASELINE = Path(__file__).with_name("baseline_hamiltonian_nonrigid.csv.gz")
 
 
 def calculate_results():

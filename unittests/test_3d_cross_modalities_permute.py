@@ -18,7 +18,7 @@ import xmodmap.preprocess
 
 from baseline_io import read_baseline, write_baseline
 
-BASELINE = Path(__file__).with_name("baseline_3d_cross_modalities_permute.csv")
+BASELINE = Path(__file__).with_name("baseline_3d_cross_modalities_permute.csv.gz")
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "3D_MTL"
 
 

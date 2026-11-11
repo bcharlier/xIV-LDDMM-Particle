@@ -12,9 +12,9 @@ torch.set_default_device(device)
 
 data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "3D_MTL")
 
-source_file = os.path.join(data_dir, "MTL_hf_penn_s_ds5.pt")
+source_file = os.path.join(data_dir, "MTL_hf_penn_s_ds5_rot90.pt")
 target_file = os.path.join(data_dir, "MTL_hf_2_noamy_ds5.pt")
-S, w_S, zeta_S = torch.load(source_file, map_location=device).values()
+S, w_S, zeta_S = torch.load(source_file, map_location=device).values()#1-9: ERC, 1;10 CA1: 3; 11 CA2: 4; 12 CA3: 5; 13 DG: 6; 14-16 Sub: 1
 T, w_T, zeta_T = torch.load(target_file, map_location=device).values()
 print(w_S.shape)
 w_S = w_S.reshape(-1, 1)
@@ -26,13 +26,13 @@ d = 3
 dimEff = 3
 sigmaRKHS = [0.05]
 sigmaVar = [0.1] 
-cA, cT, cS = 1., 1., 1.
+cA, cT, cS = 1., 1., 10.
 single = False
 gamma = 0.1
 
 ## Varifold distance without boundaries
 dataloss = xmodmap.distance.LossVarifoldNorm(sigmaVar, w_T, zeta_T, Ttilde)   
-dataloss.weight = 1.
+dataloss.weight = 0.1
 
 ## Cross-Modality
 piLoss = xmodmap.distance.PiRegularizationSystem(zeta_S, zeta_T, w_T)

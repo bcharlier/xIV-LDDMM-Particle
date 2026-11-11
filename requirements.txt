@@ -1,7 +1,7 @@
-torch
-pykeops
 numpy
 scipy
 matplotlib
+torch
+pykeops
 nibabel
 pyvista

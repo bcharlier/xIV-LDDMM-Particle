@@ -2,6 +2,7 @@ import os
 from sys import path as sys_path
 sys_path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+import numpy as np
 import torch
 import xmodmap
 import xmodmap.preprocess
@@ -73,12 +74,12 @@ import xmodmap.plot
 variables_optimum = loss.get_variables_optimized()
 trajectory = shooting(*(variables_optimum[k] for k in ["px", "pw", "qx", "qw"]))
 
-pi_ST = variables_optimum["pi_ST"].detach() ** 2   # actual (nonnegative) coupling, shape (n_zeta_S, n_zeta_T)
-
-torch.set_printoptions(precision=2, sci_mode=False)
-print("pi_ST =\n", pi_ST.detach().cpu().numpy())
-print("row sums:", pi_ST.sum(dim=1))
-print("col sums:", pi_ST.sum(dim=0))
+# actual (nonnegative) coupling, shape (n_zeta_S, n_zeta_T)
+pi_ST = variables_optimum["pi_ST"].detach() ** 2   
+with np.printoptions(precision=2, suppress=True):
+    print("pi_ST =\n", pi_ST.detach().cpu().numpy())
+    print("row sums:", pi_ST.sum(dim=1).detach().cpu().numpy())
+    print("col sums:", pi_ST.sum(dim=0).detach().cpu().numpy())
 
 xmodmap.plot.plot_registration_3d(Stilde, w_S, zeta_S, Ttilde, w_T, zeta_T, trajectory,pi_ST)
 

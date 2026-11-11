@@ -21,7 +21,7 @@ Stilde, Ttilde, s, m = xmodmap.preprocess.rescaleData(S, T)
 
 d = 2
 dimEff = 2
-sigmaRKHS = [0.2, 0.1, 0.05]
+sigmaRKHS = [0.1]
 sigmaVar = [0.2] 
 cA, cT, cS = 1., 1., 1.
 single = False
@@ -33,7 +33,7 @@ dataloss.weight = 1.
 
 ## Cross-Modality
 piLoss = xmodmap.distance.PiRegularizationSystem(zeta_S, zeta_T, w_T)
-piLoss.weight = gamma / torch.log(torch.tensor(zeta_T.shape[-1]))
+piLoss.weight = 0. * gamma / torch.log(torch.tensor(zeta_T.shape[-1]))
 
 ## non-rigid and affine deformations
 hamiltonian = xmodmap.deformation.Hamiltonian(sigmaRKHS, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single, transform="diffeo")
@@ -70,4 +70,4 @@ import xmodmap.plot
 variables_optimum = loss.get_variables_optimized()
 trajectory = shooting(*(variables_optimum[k] for k in ["px", "pw", "qx", "qw"]))
 
-xmodmap.plot.plot_registration_3d(Stilde, w_S, zeta_S, Ttilde, w_T, zeta_T, trajectory)
+xmodmap.plot.plot_registration_3d(Stilde, w_S, zeta_S, Ttilde, w_T, zeta_T, trajectory, Pi_ST)

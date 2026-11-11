@@ -6,6 +6,7 @@ TRANSFORMS = {
     "rigid":         ("rotation", "translation"),
     "affine":        ("rotation", "translation", "scale"),
     "diffeo":        ("diffeo",),
+    "translation+scale": ("translation", "scale"),
     "scale+diffeo":  ("scale", "diffeo"),
     "rigid+diffeo":  ("rotation", "translation", "diffeo"),
     "affine+diffeo": ("rotation", "translation", "scale", "diffeo"),

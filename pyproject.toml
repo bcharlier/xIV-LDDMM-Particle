@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=62.6"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xmodmap"
+version = "0.1.0"
+readme = "README.md"
+authors = [
+    {name = "Kaitlin Stouffer", email = "kstouff4@jhmi.edu"},
+    {name = "Alain Trouvé", email = "alain.trouve@ens-paris-saclay.fr"},
+    {name = "Benjamin Charlier", email = "benjamin.charlier@inre.fr"},
+]
+dynamic = ["dependencies", "optional-dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.dynamic.optional-dependencies]
+doc = {file = ["requirement-doc.txt"]}
+
+[tool.setuptools.packages.find]
+include = ["xmodmap*"]

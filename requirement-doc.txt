@@ -1,0 +1,5 @@
+sphinx
+sphinx-gallery
+sphinx-prompt
+sphinxcontrib-httpdomain
+pydata-sphinx-theme

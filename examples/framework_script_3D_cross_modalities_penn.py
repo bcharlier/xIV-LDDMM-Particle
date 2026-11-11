@@ -16,7 +16,6 @@ source_file = os.path.join(data_dir, "MTL_hf_penn_s_ds5_rot90.pt")
 target_file = os.path.join(data_dir, "MTL_hf_2_noamy_ds5.pt")
 S, w_S, zeta_S = torch.load(source_file, map_location=device).values()#1-9: ERC, 1;10 CA1: 3; 11 CA2: 4; 12 CA3: 5; 13 DG: 6; 14-16 Sub: 1
 T, w_T, zeta_T = torch.load(target_file, map_location=device).values()
-print(w_S.shape)
 w_S = w_S.reshape(-1, 1)
 w_T = w_T.reshape(-1, 1)
 S, T, c_S, c_T = xmodmap.preprocess.centerData(S, T, w_S, w_T)
@@ -24,7 +23,7 @@ Stilde, Ttilde, s, m = xmodmap.preprocess.rescaleData(S, T)
 
 d = 3
 dimEff = 3
-sigmaRKHS = [0.05]
+sigmaRKHS = [0.2]
 sigmaVar = [0.1] 
 cA, cT, cS = 1., 1., 10.
 single = False
@@ -36,7 +35,7 @@ dataloss.weight = 0.1
 
 ## Cross-Modality
 piLoss = xmodmap.distance.PiRegularizationSystem(zeta_S, zeta_T, w_T)
-piLoss.weight = gamma / torch.log(torch.tensor(zeta_T.shape[-1]))
+piLoss.weight = 0#gamma / torch.log(torch.tensor(zeta_T.shape[-1]))
 
 ## non-rigid and affine deformations
 hamiltonian = xmodmap.deformation.Hamiltonian(sigmaRKHS, Stilde, cA=cA, cS=cS,  cT=cT, dimEff=dimEff, single=single, transform="affine+diffeo")

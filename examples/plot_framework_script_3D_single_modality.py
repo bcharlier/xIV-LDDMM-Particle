@@ -1,5 +1,5 @@
 """
-3D Registration in single modality
+3D Affine Registration in single modality
 ========================================
 """
 

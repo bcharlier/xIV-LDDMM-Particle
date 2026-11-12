@@ -1,5 +1,5 @@
 """
-3D Registration in cross-modality
+3D Affine & Non-rigid Registration in cross-modality
 ========================================
 """
 

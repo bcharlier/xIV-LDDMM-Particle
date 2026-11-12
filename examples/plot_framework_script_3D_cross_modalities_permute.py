@@ -1,5 +1,5 @@
 """
-3D Registration in cross-modality for Label Permutation
+3D Affine Registration in cross-modality for Label Permutation
 ========================================
 """
 

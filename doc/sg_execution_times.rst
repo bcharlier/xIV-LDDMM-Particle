@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**01:55.419** total execution time for 2 files **from all galleries**:
+**02:09.846** total execution time for 4 files **from all galleries**:
 
 .. container::
 
@@ -33,8 +33,14 @@ Computation times
      - Time
      - Mem (MB)
    * - :ref:`sphx_glr__auto_examples_plot_framework_script_3D_cross_modalities_penn.py` (``../examples/plot_framework_script_3D_cross_modalities_penn.py``)
-     - 01:54.008
+     - 01:55.850
+     - 0.0
+   * - :ref:`sphx_glr__auto_examples_plot_framework_script_3D_cross_modalities_permute.py` (``../examples/plot_framework_script_3D_cross_modalities_permute.py``)
+     - 00:08.609
+     - 0.0
+   * - :ref:`sphx_glr__auto_examples_plot_framework_script_3D_single_modality.py` (``../examples/plot_framework_script_3D_single_modality.py``)
+     - 00:03.812
      - 0.0
    * - :ref:`sphx_glr__auto_examples_plot_framework_script_2D_rotation.py` (``../examples/plot_framework_script_2D_rotation.py``)
-     - 00:01.410
+     - 00:01.574
      - 0.0

@@ -1,5 +1,7 @@
 sphinx
+sphinx-design
 sphinx-gallery
 sphinx-prompt
 sphinxcontrib-httpdomain
 pydata-sphinx-theme
+pyvista[jupyter]

@@ -19,6 +19,12 @@ Package for estimating geometric and functional mappings between multiple modali
 - **examples:** examples of running the code
 - **tests:** unit tests
 
+## Installation
+
+Install the package and its dependencies with `pip install .`. To also install
+the documentation dependencies from `requirement-doc.txt`, use
+`pip install ".[doc]"`.
+
 ## Quick start
 
 Geometric Mapping Only example: 
@@ -45,9 +51,9 @@ python examples/example_3D_cross_B2ToB5.py
 
 # Authors
 
+- Benjamin Charlier (benjamin.charlier@inrae.fr)
 - Kaitlin Stouffer (kstouff4@jhmi.edu)
 - Alain Trouvé (alain.trouve@ens-paris-saclay.fr)
-- Benjamin Charlier (benjamin.charlier@umontpellier.fr)
 
 # License
 

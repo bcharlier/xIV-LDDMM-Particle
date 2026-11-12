@@ -80,7 +80,7 @@ sphinx_gallery_conf = {
     # order of the Gallery
     "within_subsection_order": FileNameSortKey,
     # Add patterns
-    "ignore_pattern": r"__init__\.py",
+    "ignore_pattern": r"__init__\.py|G2T\.py|penn\.py|permute\.py|modality\.py",
     "parallel": int(os.environ.get("SPHINX_GALLERY_JOBS", "1")),
     "image_scrapers": (DynamicScraper(),),
 

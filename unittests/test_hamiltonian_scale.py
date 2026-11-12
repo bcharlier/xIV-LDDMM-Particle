@@ -13,7 +13,7 @@ sys_path.insert(0, os.path.dirname(__file__))
 import torch
 
 from xmodmap.deformation import Hamiltonian
-from baseline_io import read_baseline, write_baseline
+from utils import assert_close, isclose, read_baseline, write_baseline
 
 
 BASELINE = Path(__file__).with_name("baseline_hamiltonian_scale.csv.gz")
@@ -59,7 +59,7 @@ class TestHamiltonianScale(unittest.TestCase):
                 self.assertTrue(math.isfinite(value))
                 self.assertTrue(math.isfinite(expected[name]))
                 self.assertTrue(
-                    math.isclose(value, expected[name], rel_tol=1e-8, abs_tol=1e-10),
+                    isclose(value, expected[name]),
                     f"{name}: actual {value}, baseline {expected[name]}",
                 )
 
@@ -74,13 +74,13 @@ class TestHamiltonianScale(unittest.TestCase):
             momentum_rate, _, position_rate, mass_rate = hamiltonian.forward_system(px, pw, qx, qw)
 
             # The scale rate is 0.5 in both dimensions, so H = 0.5 * 2 * 0.5**2.
-            self.assertAlmostEqual(energy.item(), 0.25)
-            torch.testing.assert_close(position_rate, 0.5 * qx)
-            torch.testing.assert_close(momentum_rate, -0.5 * px)
-            torch.testing.assert_close(mass_rate, qw)
+            self.assertTrue(isclose(energy.item(), 0.25))
+            assert_close(position_rate, 0.5 * qx)
+            assert_close(momentum_rate, -0.5 * px)
+            assert_close(mass_rate, qw)
             point_velocity, weight_rate = hamiltonian.velocity(qx, qw, px, pw, qx, qw)
-            torch.testing.assert_close(point_velocity, position_rate)
-            torch.testing.assert_close(weight_rate, mass_rate)
+            assert_close(point_velocity, position_rate)
+            assert_close(weight_rate, mass_rate)
 
 
 if __name__ == "__main__":

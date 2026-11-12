@@ -13,7 +13,7 @@ sys_path.insert(0, os.path.dirname(__file__))
 import torch
 
 from xmodmap.deformation import Hamiltonian
-from baseline_io import read_baseline, write_baseline
+from utils import assert_close, isclose, read_baseline, write_baseline
 
 
 BASELINE = Path(__file__).with_name("baseline_hamiltonian_translation.csv.gz")
@@ -59,7 +59,7 @@ class TestHamiltonianTranslation(unittest.TestCase):
                 self.assertTrue(math.isfinite(value))
                 self.assertTrue(math.isfinite(expected[name]))
                 self.assertTrue(
-                    math.isclose(value, expected[name], rel_tol=1e-8, abs_tol=1e-10),
+                    isclose(value, expected[name]),
                     f"{name}: actual {value}, baseline {expected[name]}",
                 )
 
@@ -75,13 +75,13 @@ class TestHamiltonianTranslation(unittest.TestCase):
                 hamiltonian.forward_system(px, pw, qx, qw)
             )
             # tau = sum(px) / cT = (0.4, 0.2); H = cT * |tau|^2 / 2.
-            self.assertAlmostEqual(energy.item(), 0.2)
-            torch.testing.assert_close(position_rate, torch.tensor(
+            self.assertTrue(isclose(energy.item(), 0.2))
+            assert_close(position_rate, torch.tensor(
                 [[0.4, 0.2], [0.4, 0.2]], dtype=torch.float64
             ))
             # H is independent of positions, mass momenta, and masses.
             for rate in (momentum_rate, mass_momentum_rate, mass_rate):
-                torch.testing.assert_close(rate, torch.zeros_like(rate))
+                assert_close(rate, torch.zeros_like(rate))
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ sys_path.insert(0, os.path.dirname(__file__))
 import torch
 
 from xmodmap.deformation.Shooting import Abstract_Shooting
-from baseline_io import read_baseline, write_baseline
+from utils import assert_close, isclose, read_baseline, write_baseline
 
 
 BASELINE = Path(__file__).with_name("baseline_integrator.csv.gz")
@@ -61,7 +61,7 @@ class TestIntegrator(unittest.TestCase):
                 self.assertTrue(math.isfinite(value))
                 self.assertTrue(math.isfinite(expected[name]))
                 self.assertTrue(
-                    math.isclose(value, expected[name], rel_tol=1e-8, abs_tol=1e-10),
+                    isclose(value, expected[name]),
                     f"{name}: actual {value}, baseline {expected[name]}",
                 )
 
@@ -75,8 +75,8 @@ class TestIntegrator(unittest.TestCase):
             self.assertEqual(len(trajectory), 5)
             for step, state in enumerate(trajectory):
                 self.assertEqual(len(state), 1)
-                torch.testing.assert_close(state[0], initial + step * 0.5 * derivative)
-            torch.testing.assert_close(initial, torch.tensor([1.0, -2.0], dtype=torch.float64))
+                assert_close(state[0], initial + step * 0.5 * derivative)
+            assert_close(initial, torch.tensor([1.0, -2.0], dtype=torch.float64))
 
 
 if __name__ == "__main__":

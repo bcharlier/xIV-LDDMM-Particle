@@ -1,14 +1,22 @@
-"""Read and update numerical CSV baselines with Git provenance."""
+"""Shared numerical comparisons and baseline I/O."""
 
 import csv
 import gzip
 import math
 import subprocess
+from functools import partial
 from pathlib import Path
+
+import torch
 
 
 ROOT = Path(__file__).resolve().parent.parent
 METADATA_KEYS = ("__commit__", "__worktree_dirty__")
+ABS_TOL = 1e-5
+REL_TOL = 1e-4
+
+isclose = partial(math.isclose, abs_tol=ABS_TOL, rel_tol=REL_TOL)
+assert_close = partial(torch.testing.assert_close, atol=ABS_TOL, rtol=REL_TOL)
 
 
 def open_baseline(path, mode):

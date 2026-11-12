@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from baseline_io import read_baseline, write_baseline
+from utils import read_baseline, write_baseline
 
 
 class TestBaselineIO(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestBaselineIO(unittest.TestCase):
                     subprocess.CompletedProcess([], 0, stdout="abc123\n"),
                     subprocess.CompletedProcess([], 0, stdout=status),
                 ]
-                with patch("baseline_io.subprocess.run", side_effect=responses):
+                with patch("utils.subprocess.run", side_effect=responses):
                     write_baseline(path, {"energy": 0.25})
                 with gzip.open(path, "rt", newline="", encoding="utf-8") as file:
                     rows = list(csv.reader(file))
@@ -36,7 +36,7 @@ class TestBaselineIO(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "baseline.csv.gz"
             path.write_text("original", encoding="utf-8")
-            with patch("baseline_io.subprocess.run", side_effect=FileNotFoundError("git")):
+            with patch("utils.subprocess.run", side_effect=FileNotFoundError("git")):
                 with self.assertRaises(FileNotFoundError):
                     write_baseline(path, {"energy": 0.25})
             self.assertEqual(path.read_text(encoding="utf-8"), "original")

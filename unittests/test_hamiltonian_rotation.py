@@ -13,7 +13,7 @@ sys_path.insert(0, os.path.dirname(__file__))
 import torch
 
 from xmodmap.deformation import Hamiltonian
-from baseline_io import read_baseline, write_baseline
+from utils import assert_close, isclose, read_baseline, write_baseline
 
 
 BASELINE = Path(__file__).with_name("baseline_hamiltonian_rotation.csv.gz")
@@ -59,7 +59,7 @@ class TestHamiltonianRotation(unittest.TestCase):
                 self.assertTrue(math.isfinite(value))
                 self.assertTrue(math.isfinite(expected[name]))
                 self.assertTrue(
-                    math.isclose(value, expected[name], rel_tol=1e-8, abs_tol=1e-10),
+                    isclose(value, expected[name]),
                     f"{name}: actual {value}, baseline {expected[name]}",
                 )
 
@@ -74,16 +74,16 @@ class TestHamiltonianRotation(unittest.TestCase):
             _, _, position_rate, mass_rate = hamiltonian.forward_system(px, pw, qx, qw)
 
             # The centered points rotate with angular velocity 0.5; H = 0.5.
-            self.assertAlmostEqual(energy.item(), 0.5)
-            torch.testing.assert_close(position_rate, torch.tensor(
+            self.assertTrue(isclose(energy.item(), 0.5))
+            assert_close(position_rate, torch.tensor(
                 [[0.0, -0.5], [0.0, 0.5]], dtype=torch.float64
             ))
-            torch.testing.assert_close(mass_rate, torch.zeros_like(mass_rate))
+            assert_close(mass_rate, torch.zeros_like(mass_rate))
             point_velocity, weight_rate = hamiltonian.velocity(qx, qw, px, pw, qx, qw)
-            torch.testing.assert_close(point_velocity, position_rate)
-            torch.testing.assert_close(weight_rate, torch.zeros_like(weight_rate))
+            assert_close(point_velocity, position_rate)
+            assert_close(weight_rate, torch.zeros_like(weight_rate))
             # A rotational velocity is perpendicular to the radius.
-            torch.testing.assert_close(
+            assert_close(
                 (qx * position_rate).sum(dim=1), torch.zeros(2, dtype=torch.float64)
             )
 

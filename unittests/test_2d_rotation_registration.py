@@ -15,7 +15,7 @@ import torch
 import xmodmap
 import xmodmap.preprocess
 
-from baseline_io import read_baseline, write_baseline
+from utils import isclose, read_baseline, write_baseline
 
 
 BASELINE = Path(__file__).with_name("baseline_2d_rotation_registration.csv.gz")
@@ -92,7 +92,7 @@ class Test2DRotationRegistration(unittest.TestCase):
                 self.assertTrue(math.isfinite(value))
                 self.assertTrue(math.isfinite(expected[name]))
                 self.assertTrue(
-                    math.isclose(value, expected[name], rel_tol=1e-4, abs_tol=1e-6),
+                    isclose(value, expected[name]),
                     f"{name}: actual {value}, baseline {expected[name]}",
                 )
 

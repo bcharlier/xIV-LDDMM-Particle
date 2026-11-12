@@ -16,7 +16,7 @@ import torch
 import xmodmap
 import xmodmap.preprocess
 
-from baseline_io import read_baseline, write_baseline
+from utils import isclose, read_baseline, write_baseline
 
 BASELINE = Path(__file__).with_name("baseline_3d_cross_modalities_permute.csv.gz")
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "3D_MTL"
@@ -115,7 +115,7 @@ class Test3DCrossModalitiesPermute(unittest.TestCase):
             f"{name}: actual {value}, baseline {expected[name]}"
             for name, value in actual.items()
             if not math.isfinite(value) or not math.isfinite(expected[name])
-            or not math.isclose(value, expected[name], rel_tol=1e-4, abs_tol=1e-6)
+            or not isclose(value, expected[name])
         ]
         self.assertFalse(differences, f"{len(differences)} mismatches: {differences[:10]}")
 

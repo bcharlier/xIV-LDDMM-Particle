@@ -11,7 +11,7 @@ sys_path.insert(0, os.path.dirname(__file__))
 import torch
 
 from xmodmap.distance import LossVarifoldNorm
-from baseline_io import read_baseline, write_baseline
+from utils import isclose, read_baseline, write_baseline
 
 
 BASELINE = Path(__file__).with_name("baseline_varifold_norm.csv.gz")
@@ -66,7 +66,7 @@ class TestVarifoldNorm(unittest.TestCase):
                 self.assertTrue(math.isfinite(value))
                 self.assertTrue(math.isfinite(expected[name]))
                 self.assertTrue(
-                    math.isclose(value, expected[name], rel_tol=1e-8, abs_tol=1e-10),
+                    isclose(value, expected[name]),
                     f"{name}: actual {value}, baseline {expected[name]}",
                 )
 

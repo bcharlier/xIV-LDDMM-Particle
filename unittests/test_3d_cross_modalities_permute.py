@@ -76,7 +76,7 @@ def calculate_results():
             )
 
         initial_h, initial_data, initial_pi = loss_components()
-        model.optimize(10)
+        model.optimize(1)
         final_h, final_data, final_pi = loss_components()
 
         optimized = model.get_variables_optimized()

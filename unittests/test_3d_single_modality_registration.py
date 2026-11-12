@@ -68,7 +68,7 @@ def calculate_results():
             ))
 
         initial_h, initial_data = loss_components()
-        model.optimize(40)
+        model.optimize(1)
         final_h, final_data = loss_components()
         optimum = model.get_variables_optimized()
         results = {

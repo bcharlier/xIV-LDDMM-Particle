@@ -52,11 +52,12 @@ def plot_registration_3d(
     pi_ST=None,
     radius_scale=None,
     cmap="tab10",
-    style="gaussian",
+    style="sphere",
     resolution=8,
     target_opacity=0.05,
     window_size=(1500, 500),
     show=True,
+    sphinx=True,
 ):
     """
     Plot source, target and deformed source particles in 3D with pyvista, with a slider on time.
@@ -99,8 +100,15 @@ def plot_registration_3d(
     if radius_scale is None:
         radius_scale = default_radius_scale([S, T] + Q, [wS, wT] + W, power=1 / 3)
 
+    if sphinx:
+        style = "sphere"
 
-    plotter = pv.Plotter(shape=(1, 3), window_size=list(window_size))
+    plotter = pv.Plotter(
+        shape=(1, 3),
+        window_size=list(window_size),
+        off_screen=sphinx,
+    )
+
     if style not in ("gaussian", "sphere"):
         raise ValueError(f"style must be 'gaussian' or 'sphere', got {style!r}")
     gaussian = style == "gaussian"
@@ -204,5 +212,6 @@ def plot_registration_3d(
     update(0)
 
     if show:
-        plotter.show()
+        plotter.show(auto_close=False)
+
     return plotter

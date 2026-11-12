@@ -144,6 +144,12 @@ with np.printoptions(precision=2, suppress=True):
     print("row sums:", pi_ST.sum(dim=1).detach().cpu().numpy())
     print("col sums:", pi_ST.sum(dim=0).detach().cpu().numpy())
 
-xmodmap.plot.plot_registration_3d(Stilde, w_S, zeta_S, Ttilde, w_T, zeta_T, trajectory, pi_ST)
+scene = xmodmap.plot.plot_registration_3d(
+    Stilde, w_S, zeta_S, Ttilde, w_T, zeta_T,
+    trajectory, pi_ST,
+    style="sphere",
+    show=False,
+)
+scene.show(auto_close=False)
 
 

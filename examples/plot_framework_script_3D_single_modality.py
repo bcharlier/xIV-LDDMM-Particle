@@ -128,5 +128,10 @@ import xmodmap.plot
 variables_optimum = loss.get_variables_optimized()
 trajectory = shooting(*(variables_optimum[k] for k in ["px", "pw", "qx", "qw"]))
 
-scene = xmodmap.plot.plot_registration_3d(Stilde, w_S, zeta_S, Ttilde, w_T, zeta_T, trajectory, show=False)
-scene.show()
+scene = xmodmap.plot.plot_registration_3d(
+    Stilde, w_S, zeta_S, Ttilde, w_T, zeta_T,
+    trajectory,
+    style="sphere",
+    show=False,
+)
+scene.show(auto_close=False)
